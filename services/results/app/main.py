@@ -4,8 +4,9 @@ import random
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 
+import jwt
 import redis
-from fastapi import FastAPI, HTTPException, Path
+from fastapi import Depends, FastAPI, Header, HTTPException, Path
 from psycopg.rows import dict_row
 from psycopg_pool import ConnectionPool
 
@@ -18,6 +19,7 @@ DB_DSN = (
 )
 CACHE_TTL = int(os.getenv("CACHE_TTL", "300"))
 RELEASE_AT = os.getenv("RELEASE_AT", "")  # ISO 8601. Empty = released.
+JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
 
 pool = ConnectionPool(DB_DSN, min_size=1, max_size=10, open=False)
 cache = redis.Redis(
@@ -54,7 +56,7 @@ def init_db():
             with conn.cursor() as cur:
                 cur.executemany(
                     "INSERT INTO results (student_id, name, gpa, courses) "
-                    "VALUES (%s, %s, %s, %s)",
+                    "VALUES (%s, %s, %s, %s) ON CONFLICT DO NOTHING",
                     rows,
                 )
 
@@ -94,8 +96,24 @@ def readyz():
     return {"status": "ready"}
 
 
+def current_student(authorization: str = Header(default="")) -> str:
+    scheme, _, token = authorization.partition(" ")
+    if scheme.lower() != "bearer" or not token:
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    try:
+        claims = jwt.decode(token, JWT_SECRET, algorithms=["HS256"])
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return claims["sub"]
+
+
 @app.get("/api/results/{student_id}")
-def get_result(student_id: str = Path(pattern=r"^\d{4,12}$")):
+def get_result(
+    student_id: str = Path(pattern=r"^\d{4,12}$"),
+    me: str = Depends(current_student),
+):
+    if me != student_id:
+        raise HTTPException(status_code=403, detail="You can only view your own result")
     if not is_released():
         raise HTTPException(
             status_code=403,

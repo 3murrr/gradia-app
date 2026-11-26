@@ -7,14 +7,33 @@ services:
       POSTGRES_PASSWORD: gradia
   redis:
     image: redis:alpine
+  auth:
+    build: ./services/auth
+    environment:
+      DB_HOST: postgres
+      JWT_SECRET: dev-secret-change-me
+    ports:
+      - "8002:8000"
+    depends_on:
+      - postgres
+    restart: on-failure
   results:
     build: ./services/results
     environment:
       DB_HOST: postgres
       REDIS_HOST: redis
+      JWT_SECRET: dev-secret-change-me
     ports:
       - "8001:8000"
     depends_on:
       - postgres
       - redis
-    restart: on-failure 
+    restart: on-failure
+  frontend:
+    build: ./services/frontend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - auth
+      - results
+    restart: on-failure

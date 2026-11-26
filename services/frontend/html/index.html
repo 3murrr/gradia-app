@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Gradia | University Results</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main class="card">
+    <h1>Gradia</h1>
+    <p class="sub">University Results Portal</p>
+
+    <p id="msg" hidden></p>
+
+    <section id="loginView">
+      <form id="loginForm" autocomplete="off">
+        <label for="studentId">Student ID</label>
+        <input id="studentId" inputmode="numeric" maxlength="12" placeholder="e.g. 20260001" required>
+
+        <label for="nationalId">National ID</label>
+        <input id="nationalId" type="password" inputmode="numeric" maxlength="14" placeholder="14 digits" required>
+
+        <button id="loginBtn" type="submit">View my result</button>
+      </form>
+    </section>
+
+    <section id="resultView" hidden>
+      <div class="student">
+        <h2 id="studentName"></h2>
+        <span id="studentCode" class="muted"></span>
+      </div>
+
+      <div class="gpa">
+        <span class="muted">GPA</span>
+        <strong id="gpa"></strong>
+        <span class="muted">/ 4.00</span>
+      </div>
+
+      <table>
+        <thead><tr><th>Course</th><th>Grade</th><th>Status</th></tr></thead>
+        <tbody id="courses"></tbody>
+      </table>
+
+      <button id="logoutBtn" class="secondary" type="button">Log out</button>
+    </section>
+  </main>
+
+  <script src="/app.js"></script>
+</body>
+</html>
