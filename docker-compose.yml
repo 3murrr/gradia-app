@@ -1,0 +1,20 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: gradia
+      POSTGRES_USER: gradia
+      POSTGRES_PASSWORD: gradia
+  redis:
+    image: redis:alpine
+  results:
+    build: ./services/results
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+      - redis
+    restart: on-failure 
